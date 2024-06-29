@@ -6,7 +6,7 @@ const bodyParser = require('body-parser')
 
 // Import routes
 const authRoutes = require('./routes/auth')
-// const userRoutes = require('./routes/users')
+const userRoutes = require('./routes/users')
 const storeRoutes = require('./routes/stores')
 const productRoutes = require('./routes/products')
 // const orderRoutes = require('./routes/orders')
@@ -26,7 +26,7 @@ app.use(bodyParser.urlencoded({ extended: true }))
 
 // Routes
 app.use('/api/auth', authRoutes)
-// app.use('/api/users', userRoutes)
+app.use('/api/users', userRoutes)
 app.use('/api/stores', storeRoutes)
 app.use('/api/products', productRoutes)
 // app.use('/api/orders', orderRoutes)
