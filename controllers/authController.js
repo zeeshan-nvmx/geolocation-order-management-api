@@ -41,7 +41,7 @@ const login = async (req, res) => {
       device: req.headers['user-agent'],
     })
 
-    res.status(200).json({ token, loginLocation: loginHistory })
+    res.status(200).json({ token, loginHistory })
   } catch (error) {
     res.status(400).json({ message: error.message })
   }
