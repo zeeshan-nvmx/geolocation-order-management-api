@@ -89,6 +89,21 @@ exports.confirmOrder = async (req, res) => {
   }
 }
 
+exports.getSingleOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params
+    const order = await Order.findById(orderId)
+      .populate('store', 'name')
+      .populate('products.product', 'name price')
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' })
+    }
+    res.json({ order })
+  } catch (error) {
+    res.status(400).json({ message: error.message })
+  }
+}
+
 exports.getAllOrdersForUser = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1

@@ -7,6 +7,7 @@ const { auth, isAdmin } = require('../middleware/auth')
 router.post('/create', auth, orderController.createOrder)
 router.post('/confirm', auth, orderController.confirmOrder)
 router.get('/user', auth, orderController.getAllOrdersForUser)
+router.get('/:orderId', auth, orderController.getSingleOrder)
 
 // Admin routes
 router.get('/admin', auth, isAdmin, orderController.getAllOrdersForAdmin)
