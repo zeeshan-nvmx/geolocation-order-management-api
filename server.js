@@ -1,5 +1,3 @@
-// server.js
-
 require('dotenv').config() // Load environment variables from .env file
 const express = require('express')
 const mongoose = require('mongoose')
@@ -10,7 +8,7 @@ const bodyParser = require('body-parser')
 const authRoutes = require('./routes/auth')
 // const userRoutes = require('./routes/users')
 const storeRoutes = require('./routes/stores')
-// const productRoutes = require('./routes/products')
+const productRoutes = require('./routes/products')
 // const orderRoutes = require('./routes/orders')
 
 const app = express()
@@ -30,14 +28,16 @@ app.use(bodyParser.urlencoded({ extended: true }))
 app.use('/api/auth', authRoutes)
 // app.use('/api/users', userRoutes)
 app.use('/api/stores', storeRoutes)
-// app.use('/api/products', productRoutes)
+app.use('/api/products', productRoutes)
 // app.use('/api/orders', orderRoutes)
 
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack)
-  if (err instanceof mongoose.Error) {
+  if (err.name === 'MongoError' && err.code === 11000) {
+    res.status(400).send('Duplicate key error')
+  } else if (err instanceof mongoose.Error) {
     res.status(500).send('MongoDB Error: ' + err.message)
   } else {
     res.status(500).send('Something broke!')
