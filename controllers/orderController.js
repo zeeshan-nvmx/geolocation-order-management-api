@@ -110,6 +110,8 @@ exports.getAllOrdersForUser = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10
     const skip = (page - 1) * limit
 
+    
+
     const orders = await Order.find({ user: req.user.id })
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -140,7 +142,7 @@ exports.getAllOrdersForAdmin = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate('user', 'name email')
+      .populate('user', 'username')
       .populate('store', 'name')
       .populate('products.product', 'name price')
 

@@ -10,7 +10,7 @@ router.get('/user', auth, orderController.getAllOrdersForUser)
 router.get('/:orderId', auth, orderController.getSingleOrder)
 
 // Admin routes
-router.get('/admin', auth, isAdmin, orderController.getAllOrdersForAdmin)
+router.get('/admin/allorders', auth, isAdmin, orderController.getAllOrdersForAdmin)
 router.get('/admin/user/:userId', auth, isAdmin, orderController.getOrdersForUserByAdmin)
 
 module.exports = router
