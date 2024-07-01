@@ -13,9 +13,9 @@ const signup = async (req, res) => {
     const user = new User({ username, password })
     const savedUser = await user.save()
     savedUser.password = undefined
-    res.status(201).json({ message: 'User created successfully', user: savedUser })
+    return res.status(201).json({ message: 'User created successfully', user: savedUser })
   } catch (error) {
-    res.status(400).json({ message: error.message })
+    return res.status(400).json({ message: error.message })
   }
 }
 
@@ -41,9 +41,9 @@ const login = async (req, res) => {
       device: req.headers['user-agent'],
     })
 
-    res.status(200).json({ token, loginHistory })
+    return res.status(200).json({ token, loginHistory })
   } catch (error) {
-    res.status(400).json({ message: error.message })
+    return res.status(400).json({ message: error.message })
   }
 }
 
