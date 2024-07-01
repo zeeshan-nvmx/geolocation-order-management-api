@@ -5,9 +5,7 @@ const logger = require('morgan')
 const helmet = require('helmet')
 const cors = require('cors')
 const rateLimit = require('express-rate-limit')
-const xss = require('xss-clean')
 const mongoSanitize = require('express-mongo-sanitize')
-const hpp = require('hpp')
 
 
 // Import routes
@@ -28,9 +26,7 @@ mongoose
 // Security middleware
 app.use(helmet()) 
 app.use(cors()) 
-app.use(xss()) 
-app.use(mongoSanitize()) 
-app.use(hpp())
+app.use(mongoSanitize())
 
 app.use(express.json())
 
