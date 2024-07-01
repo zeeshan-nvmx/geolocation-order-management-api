@@ -56,9 +56,9 @@ exports.createOrder = async (req, res) => {
     const message = `Your OTP for order confirmation is: ${otp}`
     await sendSMS(phoneToUse, message)
 
-    res.status(201).json({ message: 'Order created, waiting for OTP confirmation', orderId: order._id })
+    return res.status(201).json({ message: 'Order created, waiting for OTP confirmation', orderId: order._id })
   } catch (error) {
-    res.status(400).json({ message: error.message })
+    return res.status(400).json({ message: error.message })
   }
 }
 
@@ -83,9 +83,9 @@ exports.confirmOrder = async (req, res) => {
     order.status = 'confirmed'
     await order.save()
 
-    res.json({ message: 'Order confirmed successfully' })
+    return res.json({ message: 'Order confirmed successfully' })
   } catch (error) {
-    res.status(400).json({ message: error.message })
+    return res.status(400).json({ message: error.message })
   }
 }
 
@@ -98,9 +98,9 @@ exports.getSingleOrder = async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: 'Order not found' })
     }
-    res.json({ order })
+    return res.json({ order })
   } catch (error) {
-    res.status(400).json({ message: error.message })
+    return res.status(400).json({ message: error.message })
   }
 }
 
@@ -121,14 +121,14 @@ exports.getAllOrdersForUser = async (req, res) => {
 
     const total = await Order.countDocuments({ user: req.user.id })
 
-    res.json({
+    return res.status(200).json({
       orders,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
       totalOrders: total,
     })
   } catch (error) {
-    res.status(400).json({ message: error.message })
+    return res.status(400).json({ message: error.message })
   }
 }
 
@@ -148,14 +148,14 @@ exports.getAllOrdersForAdmin = async (req, res) => {
 
     const total = await Order.countDocuments()
 
-    res.json({
+    return res.status(200).json({
       orders,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
       totalOrders: total,
     })
   } catch (error) {
-    res.status(400).json({ message: error.message })
+    return res.status(400).json({ message: error.message })
   }
 }
 
@@ -175,13 +175,13 @@ exports.getOrdersForUserByAdmin = async (req, res) => {
 
     const total = await Order.countDocuments({ user: userId })
 
-    res.json({
+    return res.status(200).json({
       orders,
       currentPage: page,
       totalPages: Math.ceil(total / limit),
       totalOrders: total,
     })
   } catch (error) {
-    res.status(400).json({ message: error.message })
+    return res.status(400).json({ message: error.message })
   }
 }

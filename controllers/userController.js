@@ -4,9 +4,9 @@ const Order = require('../models/Order')
 exports.getUsers = async (req, res) => {
   try {
     const users = await User.find().select('-password')
-    res.json(users)
+    return res.json(users)
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    return res.status(500).json({ message: error.message })
   }
 }
 
@@ -16,9 +16,9 @@ exports.getSingleUser = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: 'User not found' })
     }
-    res.json(user)
+    return res.json(user)
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    return res.status(500).json({ message: error.message })
   }
 }
 
@@ -36,11 +36,11 @@ exports.getUserDashboard = async (req, res) => {
 
     const totalAmount = orders.reduce((sum, order) => sum + order.totalAmount, 0)
 
-    res.json({
+    return res.status(200).json({
       ordersToday: orders.length,
       totalAmount,
     })
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    return res.status(500).json({ message: error.message })
   }
 }

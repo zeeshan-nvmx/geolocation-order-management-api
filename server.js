@@ -30,7 +30,9 @@ app.use(helmet())
 app.use(cors()) 
 app.use(xss()) 
 app.use(mongoSanitize()) 
-app.use(hpp()) 
+app.use(hpp())
+
+app.use(express.json())
 
 // // Rate limiting
 // const limiter = rateLimit({
@@ -41,8 +43,7 @@ app.use(hpp())
 
 // Middleware
 app.use(logger(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'))
-app.use(express.json({ limit: '10kb' }))
-app.use(express.urlencoded({ extended: true, limit: '10kb' }))
+
 
 // Routes
 app.use('/api/auth', authRoutes)

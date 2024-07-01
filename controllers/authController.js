@@ -49,9 +49,9 @@ const login = async (req, res) => {
 
 const showme = async (req, res) => {
   try {
-    res.status(200).json({ id: req.user._id, username: req.user.username, role: req.user.role })
+    return res.status(200).json({ id: req.user._id, username: req.user.username, role: req.user.role })
   } catch (error) {
-    res.status(401).json({ message: 'Invalid token' })
+    return res.status(401).json({ message: 'Invalid token' })
   }
 }
 
