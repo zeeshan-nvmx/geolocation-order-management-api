@@ -62,7 +62,7 @@ exports.createOrder = async (req, res) => {
     }
 
     // Generate OTP and Order ID
-    const otp = "1234"  // generateOTP()
+    const otp = generateOTP()
     const orderId = generateOrderId()
 
     // Create order
