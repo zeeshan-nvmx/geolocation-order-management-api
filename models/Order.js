@@ -14,6 +14,7 @@ const orderSchema = new mongoose.Schema(
       },
     ],
     totalAmount: { type: Number, required: true },
+    phone: { type: String, required: true },
     status: { type: String, enum: ['pending', 'confirmed', 'cancelled'], default: 'pending' },
     otp: { type: String, required: true },
     orderId: { type: String, unique: true }, 

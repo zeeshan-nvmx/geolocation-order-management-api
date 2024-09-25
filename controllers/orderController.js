@@ -72,13 +72,14 @@ exports.createOrder = async (req, res) => {
       products: productList,
       totalAmount,
       status: 'pending',
+      phone: phoneNumber || store.ownerPhone,
       otp,
       orderId, // Auto-generated order ID with year, month, date
       location: {
         type: 'Point',
         coordinates: [location.longitude, location.latitude], // Convert lat/lon to GeoJSON format
       },
-      remarks, // Add remarks field
+      remarks, 
     })
 
     await order.save()
@@ -174,7 +175,7 @@ exports.getSingleOrder = async (req, res) => {
   try {
     const { orderId } = req.params
     const order = await Order.findById(orderId)
-      .populate('store', 'name')
+      .populate('store', 'name ownerPhone')
       .populate('products.product', 'name price')
     if (!order) {
       return res.status(404).json({ message: 'Order not found' })
