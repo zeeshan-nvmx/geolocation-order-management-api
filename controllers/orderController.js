@@ -2,6 +2,7 @@ const Order = require('../models/Order')
 const Store = require('../models/Store')
 const Product = require('../models/Product')
 const axios = require('axios')
+const mongoose = require('mongoose')
 
 // Generate a 4-digit OTP
 const generateOTP = () => {
@@ -27,19 +28,97 @@ const sendSMS = async (phone, message) => {
   await axios.post('https://api.greenweb.com.bd/api.php', greenwebsms)
 }
 
+// exports.createOrder = async (req, res) => {
+//   try {
+//     const { storeId, products, phoneNumber, location, remarks } = req.body
+
+//     // Check if location data is present and valid
+//     if (!location || typeof location.latitude !== 'number' || typeof location.longitude !== 'number') {
+//       return res.status(400).json({ message: 'Valid location data (latitude and longitude) is required' })
+//     }
+
+//     // Find store
+//     const store = await Store.findById(storeId)
+//     if (!store) {
+//       return res.status(404).json({ message: 'Store not found' })
+//     }
+
+//     // Calculate total amount and validate products
+//     let totalAmount = 0
+//     const productList = []
+//     for (let product of products) {
+//       const productInfo = await Product.findById(product.id)
+//       if (!productInfo) {
+//         return res.status(400).json({ message: `Product ${product.id} not found` })
+//       }
+
+//       // Add SKU to the product details in the order
+//       productList.push({
+//         product: productInfo._id,
+//         sku: productInfo.sku, // Include the product SKU
+//         quantity: product.quantity,
+//       })
+
+//       totalAmount += productInfo.price * product.quantity
+//     }
+
+//     // Generate OTP and Order ID
+//     const otp = generateOTP()
+//     const orderId = generateOrderId()
+
+//     // Create order
+//     const order = new Order({
+//       user: req.user.id,
+//       store: store._id,
+//       products: productList,
+//       totalAmount,
+//       status: 'pending',
+//       phone: phoneNumber || store.ownerPhone,
+//       otp,
+//       orderId, // Auto-generated order ID with year, month, date
+//       location: {
+//         type: 'Point',
+//         coordinates: [location.longitude, location.latitude], // Convert lat/lon to GeoJSON format
+//       },
+//       remarks, 
+//     })
+
+//     await order.save()
+
+//     // Send OTP via SMS
+//     const phoneToUse = phoneNumber || store.ownerPhone
+//     const message = `Your OTP for order confirmation is: ${otp}`
+//     await sendSMS(phoneToUse, message)
+
+//     return res.status(201).json({ message: 'Order created, waiting for OTP confirmation', order })
+//   } catch (error) {
+//     return res.status(400).json({ message: error.message })
+//   }
+// }
+
 exports.createOrder = async (req, res) => {
   try {
-    const { storeId, products, phoneNumber, location, remarks } = req.body
 
-    // Check if location data is present and valid
-    if (!location || typeof location.latitude !== 'number' || typeof location.longitude !== 'number') {
-      return res.status(400).json({ message: 'Valid location data (latitude and longitude) is required' })
+    console.log(req.user)
+    const { storeId, products, phoneNumber, latitude, longitude, remarks, address, customerName } = req.body
+
+    // Check if required fields are present
+    if (!products || !phoneNumber || !latitude || !longitude || !address || !customerName) {
+      return res.status(400).json({ message: 'Missing required fields' })
     }
 
-    // Find store
-    const store = await Store.findById(storeId)
-    if (!store) {
-      return res.status(404).json({ message: 'Store not found' })
+    // Check if latitude and longitude are valid strings
+    if (typeof latitude !== 'string' || typeof longitude !== 'string') {
+      return res.status(400).json({ message: 'Latitude and longitude must be strings' })
+    }
+
+    let store
+    if (storeId) {
+      // Find store if storeId is provided
+      store = await Store.findById(storeId)
+      if (!store) {
+        return res.status(404).json({ message: 'Store not found' })
+      }
     }
 
     // Calculate total amount and validate products
@@ -51,10 +130,9 @@ exports.createOrder = async (req, res) => {
         return res.status(400).json({ message: `Product ${product.id} not found` })
       }
 
-      // Add SKU to the product details in the order
       productList.push({
         product: productInfo._id,
-        sku: productInfo.sku, // Include the product SKU
+        sku: productInfo.sku,
         quantity: product.quantity,
       })
 
@@ -68,81 +146,32 @@ exports.createOrder = async (req, res) => {
     // Create order
     const order = new Order({
       user: req.user.id,
-      store: store._id,
+      createdBy: req.user.username,
+      store: store ? store._id : undefined,
       products: productList,
       totalAmount,
       status: 'pending',
-      phone: phoneNumber || store.ownerPhone,
+      phone: phoneNumber,
+      address,
+      customerName,
       otp,
-      orderId, // Auto-generated order ID with year, month, date
-      location: {
-        type: 'Point',
-        coordinates: [location.longitude, location.latitude], // Convert lat/lon to GeoJSON format
-      },
-      remarks, 
+      orderId,
+      latitude,
+      longitude,
+      remarks,
     })
 
     await order.save()
 
     // Send OTP via SMS
-    const phoneToUse = phoneNumber || store.ownerPhone
     const message = `Your OTP for order confirmation is: ${otp}`
-    await sendSMS(phoneToUse, message)
+    await sendSMS(phoneNumber, message)
 
     return res.status(201).json({ message: 'Order created, waiting for OTP confirmation', order })
   } catch (error) {
-    return res.status(400).json({ message: error.message })
+    return res.status(500).json({ message: error.message })
   }
 }
-
-
-// exports.createOrder = async (req, res) => {
-//   try {
-//     const { storeId, products, phoneNumber } = req.body
-
-//     // Find store
-//     const store = await Store.findById(storeId)
-//     if (!store) {
-//       return res.status(404).json({ message: 'Store not found' })
-//     }
-
-//     // Calculate total amount
-//     let totalAmount = 0
-//     for (let product of products) {
-//       const productInfo = await Product.findById(product.id)
-//       if (!productInfo) {
-//         return res.status(400).json({ message: `Product ${product.id} not found` })
-//       }
-//       totalAmount += productInfo.price * product.quantity
-//     }
-
-//     // Generate OTP
-//     const otp = generateOTP()
-
-//     // // mock otp
-//     // const otp = '1234'
-
-//     // Create order
-//     const order = new Order({
-//       user: req.user.id,
-//       store: store._id,
-//       products: products.map((p) => ({ product: p.id, quantity: p.quantity })),
-//       totalAmount,
-//       status: 'pending',
-//       otp,
-//     })
-//     await order.save()
-
-//     // Send OTP via SMS
-//     const phoneToUse = phoneNumber || store.ownerPhone
-//     const message = `Your OTP for order confirmation is: ${otp}`
-//     await sendSMS(phoneToUse, message)
-
-//     return res.status(201).json({ message: 'Order created, waiting for OTP confirmation', orderId: order._id })
-//   } catch (error) {
-//     return res.status(400).json({ message: error.message })
-//   }
-// }
 
 exports.confirmOrder = async (req, res) => {
   try {
@@ -246,5 +275,130 @@ exports.getOrdersForUserByAdmin = async (req, res) => {
     })
   } catch (error) {
     return res.status(400).json({ message: error.message })
+  }
+}
+
+
+exports.getAdminOrderStats = async (req, res) => {
+  try {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1)
+    const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1)
+    const startOfNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1)
+
+    // Today's total order number and sales amount
+    const todayStats = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: today },
+          status: 'confirmed',
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          orderCount: { $sum: 1 },
+          totalSales: { $sum: '$totalAmount' },
+        },
+      },
+    ])
+
+    // This month's total ordered amount
+    const thisMonthStats = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startOfMonth, $lt: startOfNextMonth },
+          status: 'confirmed',
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: '$totalAmount' },
+        },
+      },
+    ])
+
+    // Last month's total ordered amount
+    const lastMonthStats = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startOfLastMonth, $lt: startOfMonth },
+          status: 'confirmed',
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalAmount: { $sum: '$totalAmount' },
+        },
+      },
+    ])
+
+    // Product quantities ordered this month and last month
+    const productStats = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startOfLastMonth, $lt: startOfNextMonth },
+          status: 'confirmed',
+        },
+      },
+      { $unwind: '$products' },
+      {
+        $group: {
+          _id: {
+            month: { $month: '$createdAt' },
+            product: '$products.product',
+            sku: '$products.sku',
+          },
+          totalQuantity: { $sum: '$products.quantity' },
+        },
+      },
+      {
+        $lookup: {
+          from: 'products',
+          localField: '_id.product',
+          foreignField: '_id',
+          as: 'productInfo',
+        },
+      },
+      {
+        $project: {
+          month: '$_id.month',
+          product: { $arrayElemAt: ['$productInfo.name', 0] },
+          sku: '$_id.sku',
+          totalQuantity: 1,
+        },
+      },
+      {
+        $group: {
+          _id: '$month',
+          products: {
+            $push: {
+              name: '$product',
+              sku: '$sku',
+              quantity: '$totalQuantity',
+            },
+          },
+        },
+      },
+    ])
+
+    // Process product stats
+    const thisMonthProducts = productStats.find((stat) => stat._id === today.getMonth() + 1)?.products || []
+    const lastMonthProducts = productStats.find((stat) => stat._id === today.getMonth())?.products || []
+
+    res.json({
+      todayOrderCount: todayStats[0]?.orderCount || 0,
+      todayTotalSales: todayStats[0]?.totalSales || 0,
+      thisMonthTotalAmount: thisMonthStats[0]?.totalAmount || 0,
+      lastMonthTotalAmount: lastMonthStats[0]?.totalAmount || 0,
+      thisMonthProducts,
+      lastMonthProducts,
+    })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
   }
 }
