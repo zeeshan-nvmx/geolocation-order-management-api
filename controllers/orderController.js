@@ -4,6 +4,8 @@ const Product = require('../models/Product')
 const axios = require('axios')
 const mongoose = require('mongoose')
 
+const createCsvWriter = require('csv-writer').createObjectCsvWriter
+
 // Generate a 4-digit OTP
 const generateOTP = () => {
   return Math.floor(1000 + Math.random() * 9000).toString()
@@ -400,5 +402,52 @@ exports.getAdminOrderStats = async (req, res) => {
     })
   } catch (error) {
     res.status(500).json({ message: error.message })
+  }
+}
+
+exports.exportOrdersToCsv = async (req, res) => {
+  try {
+    const orders = await Order.find().populate('user store products.product')
+
+    const csvWriter = createCsvWriter({
+      path: 'orders_export.csv',
+      header: [
+        { id: 'orderId', title: 'Order ID' },
+        { id: 'customerName', title: 'Customer Name' },
+        { id: 'phone', title: 'Phone' },
+        { id: 'address', title: 'Address' },
+        { id: 'totalAmount', title: 'Total Amount' },
+        { id: 'status', title: 'Status' },
+        { id: 'createdAt', title: 'Created At' },
+        { id: 'location', title: 'Google Maps Location' },
+        { id: 'products', title: 'Products' },
+        { id: 'remarks', title: 'Remarks' },
+      ],
+    })
+
+    const records = orders.map((order) => ({
+      orderId: order.orderId,
+      customerName: order.customerName,
+      phone: order.phone,
+      address: order.address,
+      totalAmount: order.totalAmount,
+      status: order.status,
+      createdAt: order.createdAt.toISOString(),
+      location: `https://www.google.com/maps/search/?api=1&query=${order.latitude},${order.longitude}`,
+      products: order.products.map((p) => `${p.product.name} (${p.quantity})`).join(', '),
+      remarks: order.remarks || '',
+    }))
+
+    await csvWriter.writeRecords(records)
+
+    res.download('orders_export.csv', 'orders_export.csv', (err) => {
+      if (err) {
+        console.error('Error downloading file:', err)
+        res.status(500).send('Error downloading file')
+      }
+    })
+  } catch (error) {
+    console.error('Error exporting orders:', error)
+    res.status(500).send('Error exporting orders')
   }
 }

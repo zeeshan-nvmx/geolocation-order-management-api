@@ -9,11 +9,13 @@ router.post('/confirm', auth, orderController.confirmOrder)
 router.get('/all', auth, orderController.getAllOrders)
 
 router.get('/order-stats', auth, isAdmin, orderController.getAdminOrderStats)
-
+router.get('/downloadcsv', auth, isAdmin, orderController.exportOrdersToCsv)
 
 // Admin routes
 router.get('/admin/user/:userId', auth, isAdmin, orderController.getOrdersForUserByAdmin)
 
 router.get('/:orderId', auth, orderController.getSingleOrder)
+
+
 
 module.exports = router
