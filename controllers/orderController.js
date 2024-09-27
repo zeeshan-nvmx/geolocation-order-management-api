@@ -2,9 +2,13 @@ const Order = require('../models/Order')
 const Store = require('../models/Store')
 const Product = require('../models/Product')
 const axios = require('axios')
-const mongoose = require('mongoose')
+
 
 const createCsvWriter = require('csv-writer').createObjectCsvWriter
+
+const ExcelJS = require('exceljs')
+const path = require('path')
+const fs = require('fs')
 
 // Generate a 4-digit OTP
 const generateOTP = () => {
@@ -449,5 +453,134 @@ exports.exportOrdersToCsv = async (req, res) => {
   } catch (error) {
     console.error('Error exporting orders:', error)
     res.status(500).send('Error exporting orders')
+  }
+}
+
+// exports.exportOrdersToXlsx = async (req, res) => {
+//   try {
+//     const orders = await Order.find().populate('user store products.product')
+
+//     const workbook = new ExcelJS.Workbook()
+//     const worksheet = workbook.addWorksheet('Orders')
+
+//     worksheet.columns = [
+//       { header: 'Order ID', key: 'orderId', width: 15 },
+//       { header: 'Customer Name', key: 'customerName', width: 20 },
+//       { header: 'Phone', key: 'phone', width: 15 },
+//       { header: 'Address', key: 'address', width: 30 },
+//       { header: 'Total Amount', key: 'totalAmount', width: 15 },
+//       { header: 'Status', key: 'status', width: 10 },
+//       { header: 'Created At', key: 'createdAt', width: 20 },
+//       { header: 'Google Maps Location', key: 'location', width: 50 },
+//       { header: 'Products', key: 'products', width: 50 },
+//       { header: 'Remarks', key: 'remarks', width: 30 },
+//     ]
+
+//     orders.forEach((order) => {
+//       worksheet.addRow({
+//         orderId: order.orderId,
+//         customerName: order.customerName,
+//         phone: order.phone,
+//         address: order.address,
+//         totalAmount: order.totalAmount,
+//         status: order.status,
+//         createdAt: order.createdAt.toISOString(),
+//         location: `https://www.google.com/maps/search/?api=1&query=${order.latitude},${order.longitude}`,
+//         products: order.products.map((p) => `${p.product.name} (${p.quantity})`).join(', '),
+//         remarks: order.remarks || '',
+//       })
+//     })
+
+//     // Ensure phone numbers are treated as text
+//     worksheet.getColumn('phone').eachCell({ includeEmpty: true }, function (cell, rowNumber) {
+//       if (rowNumber !== 1) {
+//         // Skip header row
+//         cell.numFmt = '@' // Set number format to Text
+//       }
+//     })
+
+//     // Save file in the root folder
+//     const rootDir = path.resolve(__dirname, '..')
+//     const exportPath = path.join(rootDir, 'orders_export.xlsx')
+//     await workbook.xlsx.writeFile(exportPath)
+
+//     console.log(`File saved successfully at ${exportPath}`)
+//     res.status(200).json({ message: 'File exported successfully', path: exportPath })
+//   } catch (error) {
+//     console.error('Error exporting orders:', error)
+//     res.status(500).json({ error: 'Error exporting orders' })
+//   }
+// }
+
+exports.exportOrdersToXlsx = async (req, res) => {
+  try {
+    const orders = await Order.find().populate('user store products.product')
+
+    const workbook = new ExcelJS.Workbook()
+    const worksheet = workbook.addWorksheet('Orders')
+
+    worksheet.columns = [
+      { header: 'Order ID', key: 'orderId', width: 15 },
+      { header: 'Customer Name', key: 'customerName', width: 20 },
+      { header: 'Phone', key: 'phone', width: 15 },
+      { header: 'Address', key: 'address', width: 30 },
+      { header: 'Total Amount', key: 'totalAmount', width: 15 },
+      { header: 'Status', key: 'status', width: 10 },
+      { header: 'Created At', key: 'createdAt', width: 20 },
+      { header: 'Google Maps Location', key: 'location', width: 50 },
+      { header: 'Products', key: 'products', width: 50 },
+      { header: 'Remarks', key: 'remarks', width: 30 },
+    ]
+
+    orders.forEach((order) => {
+      worksheet.addRow({
+        orderId: order.orderId,
+        customerName: order.customerName,
+        phone: order.phone,
+        address: order.address,
+        totalAmount: order.totalAmount,
+        status: order.status,
+        createdAt: order.createdAt.toISOString(),
+        location: `https://www.google.com/maps/search/?api=1&query=${order.latitude},${order.longitude}`,
+        products: order.products.map((p) => `${p.product.name} (${p.quantity})`).join(', '),
+        remarks: order.remarks || '',
+      })
+    })
+
+    // Ensure phone numbers are treated as text
+    worksheet.getColumn('phone').eachCell({ includeEmpty: true }, function (cell, rowNumber) {
+      if (rowNumber !== 1) {
+        // Skip header row
+        cell.numFmt = '@' // Set number format to Text
+      }
+    })
+
+    // Generate filename with current date and time
+    const now = new Date()
+    const timestamp = now.toISOString().replace(/:/g, '-').replace(/\..+/, '')
+    const filename = `orders_export_${timestamp}.xlsx`
+
+    // Save file in the root folder
+    const rootDir = path.resolve(__dirname, '..')
+    const exportPath = path.join(rootDir, filename)
+    await workbook.xlsx.writeFile(exportPath)
+
+    console.log(`File saved successfully at ${exportPath}`)
+
+    // Set headers for file download
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`)
+
+    // Stream the file to the client
+    const fileStream = fs.createReadStream(exportPath)
+    fileStream.pipe(res)
+
+    // Log when the file has been sent
+    fileStream.on('close', () => {
+      console.log(`File ${filename} has been sent to the client`)
+    })
+  } catch (error) {
+    console.error('Error exporting orders:', error)
+    res.status(500).json({ error: 'Error exporting orders' })
   }
 }
