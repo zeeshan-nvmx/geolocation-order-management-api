@@ -106,7 +106,7 @@ exports.createOrder = async (req, res) => {
   try {
 
     console.log(req.user)
-    const { storeId, products, phoneNumber, latitude, longitude, remarks, address, customerName } = req.body
+    const { storeId, products, phoneNumber, latitude, longitude, remarks, existingBrand, address, customerName } = req.body
 
     // Check if required fields are present
     if (!products || !phoneNumber || !latitude || !longitude || !address || !customerName) {
@@ -165,6 +165,7 @@ exports.createOrder = async (req, res) => {
       latitude,
       longitude,
       remarks,
+      existingBrand
     })
 
     await order.save()

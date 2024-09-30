@@ -21,6 +21,7 @@ const orderSchema = new mongoose.Schema(
     otp: { type: String, required: true },
     orderId: { type: String, unique: true },
     remarks: { type: String },
+    existingBrand: { type: String },
     latitude: { type: String, required: true },
     longitude: { type: String, required: true },
   },
