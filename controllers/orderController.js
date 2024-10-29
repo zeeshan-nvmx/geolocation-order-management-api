@@ -513,6 +513,7 @@ exports.exportOrdersToCsv = async (req, res) => {
 //   }
 // }
 
+// export orders in excel format
 exports.exportOrdersToXlsx = async (req, res) => {
   try {
     const orders = await Order.find().populate('user store products.product')
